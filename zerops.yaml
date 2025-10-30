@@ -1,0 +1,44 @@
+zerops:
+  - setup: prod
+    build:
+      os: alpine
+      base: bun@1.2
+      buildCommands:
+        - bun install
+        - bun run build
+      deployFiles:
+        - package.json
+        - dist
+      cache:
+        - node_modules
+    run:
+      os: alpine
+      base: bun@1.2
+      ports:
+        - port: 3000
+          httpSupport: true
+      envVariables:
+        NODE_ENV: production
+        DB_HOST: ${db_hostname}
+        DB_NAME: ${db_dbName}
+        DB_USER: ${db_user}
+        DB_PASS: ${db_password}
+      start: bun run start:prod
+
+  - setup: dev
+    build:
+      base: bun@1.2
+      deployFiles: .
+    run:
+      os: ubuntu
+      base: bun@1.2
+      ports:
+        - port: 3000
+          httpSupport: true
+      envVariables:
+        NODE_ENV: development
+        DB_HOST: ${db_hostname}
+        DB_NAME: ${db_dbName}
+        DB_USER: ${db_user}
+        DB_PASS: ${db_password}
+      start: zsc noop --silent

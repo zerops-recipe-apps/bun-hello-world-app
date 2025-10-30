@@ -1,5 +1,8 @@
-# Zerops x Bun
-This is the most bare-bones example of Bun app running on [Zerops](https://zerops.io) — as few libraries as possible, just a single connnect, read and write to a Postgres database.
+<!-- #ZEROPS_REMOVE_START# -->
+# Bun Hello World Recipe App
+Simple Bun API with single endpoint that reads from and writes to a PostgreSQL database. Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-world) for [Zerops](https://zerops.io) platform.
+
+⬇️ **Full recipe page and deploy with one-click**
 
 ![bun](https://github.com/zeropsio/recipe-shared-assets/blob/main/covers/svg/cover-bun.svg)
 
@@ -12,6 +15,22 @@ You can either click the deploy button to deploy directly on Zerops, or manually
 
 <br/>
 
+## Integration Guide
+<!-- #ZEROPS_REMOVE_END# -->
+
+> [!TIP]
+> One-click deployments use [this repository](https://github.com/zerops-recipe-apps/go-hello-world-app) as the deployment source.
+> Feel free to explore further by using this repository as a template, or follow the guide below to integrate a similar setup into Zerops.
+> For more advanced examples, check out all of our [Go recipes](https://app.zerops.io/recipes?lf=go).
+
+### 1. Adding `zerops.yaml`
+The main application configuration file you place at the root of your repository, it tells Zerops how to build, deploy and run your application.
+
+```yaml
+COPY
+```
+
+<!-- #ZEROPS_REMOVE_START# -->
 ## Recipe features
 - Bun app running on a load balanced **Zerops Bun** service
 - Zerops **PostgreSQL 16** service as database
@@ -36,3 +55,4 @@ Futher things to think about when running more complex, highly available Bun pro
 <br/>
 
 Need help setting your project up? Join [Zerops Discord community](https://discord.com/invite/WDvCZ54).
+<!-- #ZEROPS_REMOVE_END# -->
