@@ -1,44 +1,84 @@
+# This example app uses two setups:
+# 'prod' for building, deploying and running the app,
+# as one would in production or stage environments.
+# 'dev' for deploying the source code into
+# environment with required tool-set for development.
 zerops:
   - setup: prod
     build:
+      # Building our app requires Bun installed.
+      # Use lightweight Alpine Linux build environment
+      # for faster builds and smaller footprints.
+      # Feel free to switch to the 'ubuntu' OS,
+      # for its richer base tool-set, more accessible
+      # online knowledge and easier-to-debug environment. 
       os: alpine
       base: bun@1.2
+      # Our app is built by running these common commands,
+      # with 'bun run build' specified in 'package.json'.
       buildCommands:
         - bun install
         - bun run build
+      # Deploy the 'dist' folder which contains
+      # the built app. 'package.json' is not required but helpful,
+      # allowing us to run commands specified in it.
       deployFiles:
+        - dist/
         - package.json
-        - dist
+      # Caching 'node_modules' for faster incremental builds.
       cache:
         - node_modules
     run:
+      # Run the built app inside lightweight Alpine container,
+      # with Bun v1.2 installed. We need Bun installed,
+      # because Bun (as is JavaScript) is interpreted language,
+      # needing interpreter to execute our code.
       os: alpine
       base: bun@1.2
+      # Expose the app's containers on :3000,
+      # with 'httpSupport' on, so we can enable
+      # HTTPS access over custom domains or Zerops subdomain.
       ports:
         - port: 3000
           httpSupport: true
+      # Set environment variables. Notice that we are
+      # referencing the generated database envs (such as 'dbName').
       envVariables:
         NODE_ENV: production
         DB_HOST: ${db_hostname}
         DB_NAME: ${db_dbName}
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
+      # Finally, run our app by command specified in 'package.json'.
       start: bun run start:prod
 
   - setup: dev
     build:
       base: bun@1.2
+      # In 'dev' setup, we only care about our source code.
+      # Package it and deploy it to the runtime container.
       deployFiles: .
     run:
+      # In the runtime container - which will serve
+      # as our development environment (CDE) - we want
+      # richer basic tool-set which Ubuntu provides.
       os: ubuntu
+      # We need Bun to run and test our app.
       base: bun@1.2
+      # Also expose the container on :3000,
+      # so we can test our app from the outside,
+      # probably via Zerops subdomain.
       ports:
         - port: 3000
           httpSupport: true
       envVariables:
+        # Change the 'NODE_ENV' env to 'development'.
+        # The app needs the same database connection envs,
+        # as when running in 'prod' setup.
         NODE_ENV: development
         DB_HOST: ${db_hostname}
         DB_NAME: ${db_dbName}
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
-      start: zsc noop --silent
+      # Don't specify any 'start' commands, as you'll probably
+      # run and test the app manually inside the container.
