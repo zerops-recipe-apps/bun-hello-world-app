@@ -1,4 +1,3 @@
-<!-- #ZEROPS_REMOVE_START# -->
 # Bun Hello World Recipe App
 Simple Bun API with single endpoint that reads from and writes to a PostgreSQL database. Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-world) for [Zerops](https://zerops.io) platform.
 
@@ -16,7 +15,8 @@ You can either click the deploy button to deploy directly on Zerops, or manually
 <br/>
 
 ## Integration Guide
-<!-- #ZEROPS_REMOVE_END# -->
+
+<!-- #ZEROPS_EXTRACT_START:integration-guide# -->
 
 > [!TIP]
 > One-click deployments use [this repository](https://github.com/zerops-recipe-apps/go-hello-world-app) as the deployment source.
@@ -113,7 +113,8 @@ zerops:
       # run and test the app manually inside the container.
 ```
 
-<!-- #ZEROPS_REMOVE_START# -->
+<!-- #ZEROPS_EXTRACT_END:integration-guide# -->
+
 ## Recipe features
 - Bun app running on a load balanced **Zerops Bun** service
 - Zerops **PostgreSQL 16** service as database
@@ -138,4 +139,3 @@ Further things to think about when running more complex, highly available Bun pr
 <br/>
 
 Need help setting your project up? Join [Zerops Discord community](https://discord.com/invite/WDvCZ54).
-<!-- #ZEROPS_REMOVE_END# -->
