@@ -1,141 +1,123 @@
 # Bun Hello World Recipe App
-Simple Bun API with single endpoint that reads from and writes to a PostgreSQL database. Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-world) for [Zerops](https://zerops.io) platform.
+
+<!-- #ZEROPS_EXTRACT_START:intro# -->
+Basic example of running [Bun](https://bun.sh) applications on [Zerops](https://zerops.io). Simple Bun HTTP server connected to PostgreSQL, with health check verifying database connectivity and data seeded by the migration.
+Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-world) for [Zerops](https://zerops.io) platform.
+<!-- #ZEROPS_EXTRACT_END:intro# -->
 
 ⬇️ **Full recipe page and deploy with one-click**
 
-![bun](https://github.com/zeropsio/recipe-shared-assets/blob/main/covers/svg/cover-bun.svg)
+[![Deploy on Zerops](https://github.com/zeropsio/recipe-shared-assets/blob/main/deploy-button/light/deploy-button.svg)](https://app.zerops.io/recipes/bun-hello-world?environment=small-production)
 
-<br />
-
-## Deploy on Zerops
-You can either click the deploy button to deploy directly on Zerops, or manually copy the [import yaml](https://github.com/zeropsio/recipe-bun/blob/main/zerops-project-import.yml) to the import dialog in the Zerops app.
-
-[![Deploy on Zerops](https://github.com/zeropsio/recipe-shared-assets/blob/main/deploy-button/green/deploy-button.svg)](https://app.zerops.io/recipe/bun)
-
-<br/>
+![bun cover](https://github.com/zeropsio/recipe-shared-assets/blob/main/covers/svg/cover-bun.svg)
 
 ## Integration Guide
 
 <!-- #ZEROPS_EXTRACT_START:integration-guide# -->
 
-> [!TIP]
-> One-click deployments use [this repository](https://github.com/zerops-recipe-apps/go-hello-world-app) as the deployment source.
-> Feel free to explore further by using this repository as a template, or follow the guide below to integrate a similar setup into Zerops.
-> For more advanced examples, check out all of our [Go recipes](https://app.zerops.io/recipes?lf=go).
-
 ### 1. Adding `zerops.yaml`
 The main application configuration file you place at the root of your repository, it tells Zerops how to build, deploy and run your application.
 
 ```yaml
-# This example app uses two setups:
-# 'prod' for building, deploying, and running the app
-# in production or staging environments.
-# 'dev' for deploying the source code into a development
-# environment with the required toolset.
 zerops:
+  # Production setup — bundle TypeScript into self-contained artifacts, deploy minimal footprint.
+  # Bun's bundler inlines all dependencies, so no node_modules needed at runtime.
   - setup: prod
     build:
-      # The build requires Bun to be installed.
-      # Use the lightweight Alpine Linux build container
-      # for faster builds and a smaller footprint.
-      # You can switch to 'ubuntu' OS for its richer
-      # base toolset, more accessible online knowledge,
-      # and easier-to-debug environment.
-      os: alpine
       base: bun@1.2
-      # Build the app by running these commands,
-      # with 'bun run build' defined in 'package.json'.
+
+      # BUN_INSTALL redirects Bun's global package cache into the project tree so
+      # Zerops can cache it between builds (default ~/.bun is outside build container scope).
+      envVariables:
+        BUN_INSTALL: ./.bun
+
       buildCommands:
-        - bun install
-        - bun run build
-      # Deploy the 'dist' folder containing the built app.
-      # 'package.json' is not required but can be helpful,
-      # as it allows running commands defined in it.
+        # --frozen-lockfile validates bun.lock for reproducible production builds
+        - bun install --frozen-lockfile
+        # Bundle app and migration into standalone artifacts — pg and all imports inlined
+        - bun build src/index.ts --outfile dist/index.js --target bun
+        - bun build migrate.ts --outfile dist/migrate.js --target bun
+
       deployFiles:
-        - dist/
-        - package.json
-      # Cache 'node_modules' for faster incremental builds.
+        # Bundled artifacts only — Bun inlines all deps at build time, no node_modules needed
+        - ./dist
+
       cache:
         - node_modules
+        - .bun/install/cache  # Must match BUN_INSTALL path above
+
+    # Readiness check: verifies the container passes health before project balancer routes traffic
+    deploy:
+      readinessCheck:
+        httpGet:
+          port: 3000
+          path: /
+
     run:
-      # Run the built app in a lightweight Alpine container
-      # with Bun v1.2 installed. Bun is required because
-      # JavaScript is an interpreted language that needs
-      # an interpreter to execute the code.
-      os: alpine
       base: bun@1.2
-      # Expose the app's containers on port 3000.
-      # Enable 'httpSupport' to allow HTTPS access via
-      # custom domains or Zerops subdomain.
+
+      # Run migration once per deploy (execOnce). In initCommands — not
+      # buildCommands — so migration and code deploy atomically.
+      initCommands:
+        - zsc execOnce ${appVersionId} -- bun run dist/migrate.js
+
       ports:
         - port: 3000
           httpSupport: true
-      # Set environment variables. Note that we're referencing
-      # the generated database environment variables (such as 'dbName').
+
       envVariables:
+        # Enables production optimizations and disables dev warnings
         NODE_ENV: production
+        DB_NAME: db
         DB_HOST: ${db_hostname}
-        DB_NAME: ${db_dbName}
+        DB_PORT: ${db_port}
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
-      # Start the app using the command defined in 'package.json'.
-      start: bun run start:prod
 
+      start: bun run dist/index.js
+
+  # Development setup — deploy full source for live editing via SSH.
+  # The developer SSHs in after deploy and runs 'bun run dev' (hot reload).
   - setup: dev
     build:
       base: bun@1.2
-      # For the 'dev' setup, deploy all source code
-      # to the runtime container, as that is all we care about.
-      deployFiles: .
+
+      envVariables:
+        BUN_INSTALL: ./.bun
+
+      buildCommands:
+        # bun install (not --frozen-lockfile) — lockfile may not exist in fresh forks
+        - bun install
+
+      deployFiles:
+        # Deploy everything — developer runs TypeScript source directly via SSH
+        - ./
+
+      cache:
+        - node_modules
+        - .bun/install/cache
+
     run:
-      # Use Ubuntu for the runtime container, which serves
-      # as the development environment, providing a richer
-      # base toolset than Alpine.
-      os: ubuntu
-      # Bun is needed to run and test the app.
       base: bun@1.2
-      # Also expose the container on port 3000
-      # so the app can be tested externally, typically
-      # via the Zerops subdomain.
+
+      # Migration runs once at deploy — DB schema is ready when developer SSHs in
+      initCommands:
+        - zsc execOnce ${appVersionId} -- bun run migrate.ts
+
       ports:
         - port: 3000
           httpSupport: true
+
       envVariables:
-        # Set the 'NODE_ENV' environment variable to 'development'.
-        # The app needs the same database connection environment
-        # variables as the 'prod' setup.
         NODE_ENV: development
+        DB_NAME: db
         DB_HOST: ${db_hostname}
-        DB_NAME: ${db_dbName}
+        DB_PORT: ${db_port}
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
-      # No 'start' command is specified, as you'll typically
-      # run and test the app manually inside the container.
+
+      # Container stays idle — developer starts 'bun run dev' (hot reload) manually via SSH
+      start: zsc noop --silent
 ```
 
 <!-- #ZEROPS_EXTRACT_END:integration-guide# -->
-
-## Recipe features
-- Bun app running on a load balanced **Zerops Bun** service
-- Zerops **PostgreSQL 16** service as database
-- Healthcheck setup example
-- Utilization of Zerops' built-in **environment variables** system
-- Utilization of Zerops' built-in **log management**
-
-<br/>
-
-## Production vs. development
-Base of the recipe is ready for production, the difference comes down to:
-
-- Use highly available version of the PostgreSQL database (change `mode` from `NON_HA` to `HA` in recipe YAML, `db` service section)
-- Use at least two containers for the Node.js service to achieve high reliability and resilience (add `minContainers: 2` in recipe YAML, `api` service section)
-
-Further things to think about when running more complex, highly available Bun production apps on Zerops:
-- containers are volatile - use Zerops object storage to store your files
-- use Zerops Redis (KeyDB) for caching, storing sessions and pub/sub messaging
-- use more advanced logging lib, such as [winston](https://github.com/winstonjs/winston)
-
-<br/>
-<br/>
-
-Need help setting your project up? Join [Zerops Discord community](https://discord.com/invite/WDvCZ54).

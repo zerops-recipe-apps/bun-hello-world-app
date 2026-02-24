@@ -1,21 +1,14 @@
 {
-  "name": "zerops-bun",
+  "name": "bun-hello-world",
   "version": "1.0.0",
   "scripts": {
-    "start": "bun run src/main.ts",
-    "dev": "bun run --hot src/main.ts",
-    "build": "bun build src/main.ts --outdir ./dist --target bun",
-    "start:prod": "bun run dist/main.js"
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "pg": "^8.5.1",
-    "uuid": "^9.0.1"
+    "pg": "^8.13.3"
   },
   "devDependencies": {
-    "typescript": "^5.5.2",
-    "@types/bun": "^1.1.5",
-    "@types/pg": "^8.11.6",
-    "@types/uuid": "^10.0.0"
-  },
-  "type": "module"
+    "@types/pg": "^8.11.11"
+  }
 }
