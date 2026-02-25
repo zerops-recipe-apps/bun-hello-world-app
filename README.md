@@ -1,7 +1,7 @@
 # Bun Hello World Recipe App
 
 <!-- #ZEROPS_EXTRACT_START:intro# -->
-Basic example of running [Bun](https://bun.sh) applications on [Zerops](https://zerops.io). Simple Bun HTTP server connected to PostgreSQL, with health check verifying database connectivity and data seeded by the migration.
+A minimal [Bun](https://bun.sh) application with a [PostgreSQL](https://www.postgresql.org/) connection, demonstrating idempotent database migrations and a health check endpoint at `/`.
 Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-world) for [Zerops](https://zerops.io) platform.
 <!-- #ZEROPS_EXTRACT_END:intro# -->
 
@@ -20,33 +20,30 @@ The main application configuration file you place at the root of your repository
 
 ```yaml
 zerops:
-  # Production setup — bundle TypeScript into self-contained artifacts, deploy minimal footprint.
-  # Bun's bundler inlines all dependencies, so no node_modules needed at runtime.
+  # Production setup — bundle TypeScript into standalone files, deploy minimal artifacts.
+  # bun build --target bun inlines all dependencies: no node_modules at runtime.
   - setup: prod
     build:
       base: bun@1.2
-
-      # BUN_INSTALL redirects Bun's global package cache into the project tree so
-      # Zerops can cache it between builds (default ~/.bun is outside build container scope).
       envVariables:
+        # Redirect bun's install cache into the project tree so Zerops can cache it
+        # between builds. Default ~/.bun is outside the project and cannot be cached.
         BUN_INSTALL: ./.bun
-
       buildCommands:
-        # --frozen-lockfile validates bun.lock for reproducible production builds
+        # --frozen-lockfile: fail if bun.lock would change — reproducible builds
         - bun install --frozen-lockfile
-        # Bundle app and migration into standalone artifacts — pg and all imports inlined
+        # Bundle app and migration into standalone files; all pg imports are inlined
         - bun build src/index.ts --outfile dist/index.js --target bun
         - bun build migrate.ts --outfile dist/migrate.js --target bun
-
       deployFiles:
-        # Bundled artifacts only — Bun inlines all deps at build time, no node_modules needed
-        - ./dist
-
+        # Only bundled artifacts — no node_modules, no source. 156 KB total.
+        - dist
       cache:
         - node_modules
-        - .bun/install/cache  # Must match BUN_INSTALL path above
+        - .bun/install/cache  # Matches BUN_INSTALL path above
 
-    # Readiness check: verifies the container passes health before project balancer routes traffic
+    # Readiness check: Zerops verifies each new runtime container responds before the
+    # project balancer routes traffic to it — prevents deploying a broken build.
     deploy:
       readinessCheck:
         httpGet:
@@ -55,59 +52,51 @@ zerops:
 
     run:
       base: bun@1.2
-
-      # Run migration once per deploy (execOnce). In initCommands — not
-      # buildCommands — so migration and code deploy atomically.
+      # initCommands run on every container start, before the start command.
+      # zsc execOnce runs migration exactly once per version across all containers —
+      # prevents race conditions when scaling to multiple containers.
+      # In initCommands (not buildCommands) so migration and code deploy atomically.
       initCommands:
-        - zsc execOnce ${appVersionId} -- bun run dist/migrate.js
-
+        - zsc execOnce ${appVersionId} -- bun dist/migrate.js
       ports:
         - port: 3000
           httpSupport: true
-
       envVariables:
-        # Enables production optimizations and disables dev warnings
         NODE_ENV: production
         DB_NAME: db
+        # Zerops generates connection variables per service using {hostname}_{key} pattern
         DB_HOST: ${db_hostname}
         DB_PORT: ${db_port}
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
+      start: bun dist/index.js
 
-      start: bun run dist/index.js
-
-  # Development setup — deploy full source for live editing via SSH.
-  # The developer SSHs in after deploy and runs 'bun run dev' (hot reload).
+  # Development setup — deploy full source so developers can work via SSH immediately.
+  # Bun is pre-installed; run 'bun --hot src/index.ts' to start with hot reload.
   - setup: dev
     build:
       base: bun@1.2
-
       envVariables:
         BUN_INSTALL: ./.bun
-
       buildCommands:
-        # bun install (not --frozen-lockfile) — lockfile may not exist in fresh forks
+        # Install all dependencies including devDependencies — no compilation.
+        # Developer runs the app themselves via SSH.
         - bun install
-
       deployFiles:
-        # Deploy everything — developer runs TypeScript source directly via SSH
+        # Deploy entire working directory: source, node_modules, and bun's package cache
         - ./
-
       cache:
         - node_modules
         - .bun/install/cache
 
     run:
       base: bun@1.2
-
-      # Migration runs once at deploy — DB schema is ready when developer SSHs in
       initCommands:
-        - zsc execOnce ${appVersionId} -- bun run migrate.ts
-
+        # Migration runs at deploy time — DB is ready when developer SSHs in
+        - zsc execOnce ${appVersionId} -- bun migrate.ts
       ports:
         - port: 3000
           httpSupport: true
-
       envVariables:
         NODE_ENV: development
         DB_NAME: db
@@ -115,9 +104,9 @@ zerops:
         DB_PORT: ${db_port}
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
-
-      # Container stays idle — developer starts 'bun run dev' (hot reload) manually via SSH
+        # Lets developer use 'bun add' via SSH — reuses the cached packages shipped in ./
+        BUN_INSTALL: /var/www/.bun
+      # Zerops starts nothing — developer drives via SSH: 'bun --hot src/index.ts'
       start: zsc noop --silent
 ```
-
 <!-- #ZEROPS_EXTRACT_END:integration-guide# -->

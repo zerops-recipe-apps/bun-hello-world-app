@@ -1,12 +1,12 @@
-import { Client } from "pg";
+import { Pool } from 'pg';
 
-const dbConfig = {
-  host: Bun.env.DB_HOST!,
-  port: parseInt(Bun.env.DB_PORT ?? "5432"),
-  user: Bun.env.DB_USER!,
-  password: Bun.env.DB_PASS!,
-  database: Bun.env.DB_NAME!,
-};
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT ?? '5432'),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+});
 
 Bun.serve({
   port: 3000,
@@ -14,37 +14,34 @@ Bun.serve({
   async fetch(req) {
     const { pathname } = new URL(req.url);
 
-    if (req.method === "GET" && pathname === "/") {
-      const client = new Client(dbConfig);
-      try {
-        await client.connect();
-        const result = await client.query(
-          "SELECT message FROM greetings LIMIT 1"
-        );
-        const greeting = result.rows[0]?.message ?? "No greeting found";
-
-        return Response.json({
-          type: "bun",
-          greeting,
-          status: { database: "OK" },
-        });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return Response.json(
-          {
-            type: "bun",
-            greeting: null,
-            status: { database: `ERROR: ${message}` },
-          },
-          { status: 503 }
-        );
-      } finally {
-        await client.end().catch(() => {});
-      }
+    if (req.method !== 'GET' || pathname !== '/') {
+      return new Response('Not Found', { status: 404 });
     }
 
-    return new Response("Not Found", { status: 404 });
+    let client;
+    try {
+      client = await pool.connect();
+      const { rows } = await client.query<{ message: string }>(
+        'SELECT message FROM greetings LIMIT 1'
+      );
+      return Response.json({
+        type: 'bun',
+        greeting: rows[0].message,
+        status: { database: 'OK' },
+      });
+    } catch (err) {
+      return Response.json(
+        {
+          type: 'bun',
+          greeting: null,
+          status: { database: `ERROR: ${(err as Error).message}` },
+        },
+        { status: 503 }
+      );
+    } finally {
+      client?.release();
+    }
   },
 });
 
-console.log("Server running on http://localhost:3000");
+console.log('Server running on port 3000');
