@@ -110,3 +110,29 @@ zerops:
       start: zsc noop --silent
 ```
 <!-- #ZEROPS_EXTRACT_END:integration-guide# -->
+
+<!-- #ZEROPS_EXTRACT_START:knowledge-base# -->
+
+### Keywords
+bun, bunx, hono, elysia, javascript, typescript
+
+### TL;DR
+Bun runtime with npm/yarn/git pre-installed. Bundle to `dist/`, deploy without node_modules. Bind `0.0.0.0` via `Bun.serve`.
+
+### Binding
+
+`Bun.serve({hostname: "0.0.0.0"})` -- default localhost = 502
+- Elysia: `hostname: "0.0.0.0"` in constructor
+- Hono: `Bun.serve({fetch: app.fetch, hostname: "0.0.0.0"})`
+
+### Resource Requirements
+
+**Dev** (install on container): `minRam: 0.5` — `bun install` fast, lower peak than npm.
+**Stage/Prod**: `minRam: 0.25` — Bun runtime lightweight.
+
+### Common Mistakes
+
+- `deployFiles: dist/~` with `start: bun dist/index.js` -- tilde strips the `dist/` prefix, so the file lands at `/var/www/index.js`, not `/var/www/dist/index.js`
+- Not binding `0.0.0.0` = 502 Bad Gateway
+- Use `bunx` instead of `npx` -- `npx` may not resolve correctly in Bun runtime
+<!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
