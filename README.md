@@ -112,27 +112,30 @@ zerops:
 <!-- #ZEROPS_EXTRACT_END:integration-guide# -->
 
 <!-- #ZEROPS_EXTRACT_START:knowledge-base# -->
+### Base Image
 
-### Keywords
-bun, bunx, hono, elysia, javascript, typescript
-
-### TL;DR
-Bun runtime with npm/yarn/git pre-installed. Bundle to `dist/`, deploy without node_modules. Bind `0.0.0.0` via `Bun.serve`.
+Includes: Bun, `npm`, `yarn`, `git`, `bunx`.
+NOT included: `pnpm`.
 
 ### Binding
 
-`Bun.serve({hostname: "0.0.0.0"})` -- default localhost = 502
+Zerops L7 balancer routes to the container's VXLAN IP — apps that bind `localhost` get 502 with no useful error.
+
+`Bun.serve({hostname: "0.0.0.0"})` — default is localhost = 502
 - Elysia: `hostname: "0.0.0.0"` in constructor
 - Hono: `Bun.serve({fetch: app.fetch, hostname: "0.0.0.0"})`
 
 ### Resource Requirements
 
+Zerops autoscaling needs ~10s to react — `minRam` must absorb the startup/install spike.
+
 **Dev** (install on container): `minRam: 0.5` — `bun install` fast, lower peak than npm.
 **Stage/Prod**: `minRam: 0.25` — Bun runtime lightweight.
 
-### Common Mistakes
+### Gotchas
 
-- `deployFiles: dist/~` with `start: bun dist/index.js` -- tilde strips the `dist/` prefix, so the file lands at `/var/www/index.js`, not `/var/www/dist/index.js`
-- Not binding `0.0.0.0` = 502 Bad Gateway
-- Use `bunx` instead of `npx` -- `npx` may not resolve correctly in Bun runtime
+- **Tilde in `deployFiles` strips the directory prefix** — `dist/~` extracts contents to `/var/www/`, so `start: bun dist/index.js` fails because the file is at `/var/www/index.js`. Use `dist` (no tilde) to keep the directory.
+- **Build and run are separate containers** — only what's in `deployFiles` exists at runtime. If `bun build --target bun` doesn't inline a dependency (native bindings), it must be in `deployFiles`.
+- **`BUN_INSTALL: ./.bun` for build caching** — Zerops can only cache paths inside the project tree. Default `~/.bun` is outside it and gets lost between builds.
+- **Use `bunx` instead of `npx`** — `npx` may not resolve correctly in the Bun runtime.
 <!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
