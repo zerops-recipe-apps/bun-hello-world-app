@@ -41,9 +41,10 @@ zerops:
       cache:
         - node_modules
         - .bun/install/cache  # Matches BUN_INSTALL path above
+        - dist                # Cache bundled output — skip rebuild if only config changes
 
-    # Readiness check: Zerops verifies each new runtime container responds before the
-    # project balancer routes traffic to it — prevents deploying a broken build.
+    # Readiness check: Zerops verifies each new runtime container responds 200 before
+    # routing traffic to it — zero-downtime deploys even on first container start.
     deploy:
       readinessCheck:
         httpGet:
@@ -117,8 +118,15 @@ zerops:
 Includes: Bun, `npm`, `yarn`, `git`, `bunx`.
 NOT included: `pnpm`.
 
+### Binding
+
+Zerops L7 balancer routes to the container's VXLAN IP — apps that bind `localhost` get 502.
+
+`Bun.serve({hostname: "0.0.0.0"})` — default is localhost = 502.
+
 ### Gotchas
 
 - **`BUN_INSTALL: ./.bun` for build caching** — Zerops can only cache paths inside the project tree. Default `~/.bun` is outside it and gets lost between builds.
 - **Use `bunx` instead of `npx`** — `npx` may not resolve correctly in the Bun runtime.
+- **Tilde in `deployFiles` strips the directory prefix** — `dist/~` extracts contents to `/var/www/`, so `start: bun dist/index.js` fails because the file is at `/var/www/index.js`. Use `dist` (no tilde) to keep the directory.
 <!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
