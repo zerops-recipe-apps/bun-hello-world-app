@@ -16,7 +16,7 @@ Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-wor
 <!-- #ZEROPS_EXTRACT_START:integration-guide# -->
 
 ### 1. Adding `zerops.yaml`
-The main application configuration file you place at the root of your repository, it tells Zerops how to build, deploy and run your application.
+The main configuration file at the root of your repository — tells Zerops how to build, deploy and run your application.
 
 ```yaml
 zerops:
@@ -30,7 +30,7 @@ zerops:
         # between builds. Default ~/.bun is outside the project and cannot be cached.
         BUN_INSTALL: ./.bun
       buildCommands:
-        # --frozen-lockfile: fail if bun.lock would change — reproducible builds
+        # --frozen-lockfile: fail if bun.lock would change (reproducible CI builds)
         - bun install --frozen-lockfile
         # Bundle app and migration into standalone files; all pg imports are inlined
         - bun build src/index.ts --outfile dist/index.js --target bun
@@ -118,7 +118,7 @@ zerops:
 <!-- #ZEROPS_EXTRACT_START:knowledge-base# -->
 ### Base Image
 
-Includes: Bun, `npm`, `yarn`, `git`, `bunx`.
+Includes: Bun, `npm`, `yarn`, `git`, `bunx`, `node`.
 NOT included: `pnpm`.
 
 ### Gotchas
