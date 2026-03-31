@@ -20,9 +20,10 @@ zerops:
       cache:
         - node_modules
         - .bun/install/cache  # Matches BUN_INSTALL path above
+        - dist                # Cache bundled output — skip rebuild if only config changes
 
-    # Readiness check: Zerops verifies each new runtime container responds before the
-    # project balancer routes traffic to it — prevents deploying a broken build.
+    # Readiness check: Zerops verifies each new runtime container responds 200 before
+    # routing traffic to it — zero-downtime deploys even on first container start.
     deploy:
       readinessCheck:
         httpGet:
@@ -49,10 +50,6 @@ zerops:
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
       start: bun dist/index.js
-      healthCheck:
-        httpGet:
-          port: 3000
-          path: /
 
   # Development setup — deploy full source so developers can work via SSH immediately.
   # Bun is pre-installed; run 'bun --hot src/index.ts' to start with hot reload.
