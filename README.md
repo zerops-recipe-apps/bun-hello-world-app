@@ -70,6 +70,10 @@ zerops:
         DB_USER: ${db_user}
         DB_PASS: ${db_password}
       start: bun dist/index.js
+      healthCheck:
+        httpGet:
+          port: 3000
+          path: /
 
   # Development setup — deploy full source so developers can work via SSH immediately.
   # Bun is pre-installed; run 'bun --hot src/index.ts' to start with hot reload.
