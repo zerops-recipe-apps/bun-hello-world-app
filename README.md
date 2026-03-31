@@ -1,8 +1,7 @@
 # Bun Hello World Recipe App
 
 <!-- #ZEROPS_EXTRACT_START:intro# -->
-A minimal [Bun](https://bun.sh) application with a [PostgreSQL](https://www.postgresql.org/) connection, demonstrating idempotent database migrations and a health check endpoint at `/`.
-Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-world) for [Zerops](https://zerops.io) platform.
+A minimal Bun application with a PostgreSQL connection, demonstrating idempotent database migrations and a health check endpoint at `/`. Used within Bun Hello World recipe for Zerops platform.
 <!-- #ZEROPS_EXTRACT_END:intro# -->
 
 ⬇️ **Full recipe page and deploy with one-click**
@@ -14,7 +13,6 @@ Used within [Bun Hello World recipe](https://app.zerops.io/recipes/bun-hello-wor
 ## Integration Guide
 
 <!-- #ZEROPS_EXTRACT_START:integration-guide# -->
-
 ### 1. Adding `zerops.yaml`
 The main application configuration file you place at the root of your repository, it tells Zerops how to build, deploy and run your application.
 
@@ -114,8 +112,8 @@ zerops:
 <!-- #ZEROPS_EXTRACT_START:knowledge-base# -->
 ### Base Image
 
-Includes: Bun, `npm`, `yarn`, `git`, `bunx`.
-NOT included: `pnpm`.
+Includes: Bun, `npm`, `yarn`, `git`, `bunx`, `node`.
+NOT included: `pnpm`, `deno`.
 
 ### Gotchas
 
