@@ -41,6 +41,7 @@ zerops:
       cache:
         - node_modules
         - .bun/install/cache  # Matches BUN_INSTALL path above
+        - bun.lock  # Cache lock file for consistent installs across builds
 
     # Readiness check: Zerops verifies each new runtime container responds before the
     # project balancer routes traffic to it — prevents deploying a broken build.
@@ -120,6 +121,8 @@ zerops:
 
 Includes: Bun, `npm`, `yarn`, `git`, `bunx`.
 NOT included: `pnpm`.
+
+> **Tip:** For monorepo setups, consider using Bun workspaces with `bun install --filter` to install only the dependencies needed for the deployed service.
 
 ### Gotchas
 
