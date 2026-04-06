@@ -125,4 +125,5 @@ NOT included: `pnpm`.
 
 - **`BUN_INSTALL: ./.bun` for build caching** — Zerops can only cache paths inside the project tree. Default `~/.bun` is outside it and gets lost between builds.
 - **Use `bunx` instead of `npx`** — `npx` may not resolve correctly in the Bun runtime.
+- **`bun build --target bun` only works with pure-JS dependencies** — The prod setup bundles with `bun build` which inlines all imports. This works for pure-JS packages (e.g. `pg`) but silently produces broken bundles for native addons (`mysql2`, `bcrypt`, `sharp`, `canvas`, etc.). The build exits 0 but the bundle fails at runtime or is empty. If your app uses native dependencies, skip bundling: use `deployFiles: [./]` and `start: bun src/index.ts` for both dev and prod setups.
 <!-- #ZEROPS_EXTRACT_END:knowledge-base# -->
