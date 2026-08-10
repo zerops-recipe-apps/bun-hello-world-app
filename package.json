@@ -1,14 +1,36 @@
 {
-  "name": "bun-hello-world",
+  "name": "bun-hello-world-app",
   "version": "1.0.0",
   "scripts": {
     "dev": "bun --hot src/index.ts"
   },
   "dependencies": {
-    "pg": "^8.13.3"
+    "pg": "8.22.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.2",
-    "@types/pg": "^8.11.11"
+    "@types/bun": "1.2.10",
+    "@types/pg": "8.20.4"
+  },
+  "description": "Minimal Bun + TypeScript HTTP demo for Zerops with PostgreSQL.",
+  "author": "Zerops",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zerops-recipe-apps/bun-hello-world-app.git"
+  },
+  "homepage": "https://github.com/zerops-recipe-apps/bun-hello-world-app",
+  "bugs": {
+    "url": "https://github.com/zerops-recipe-apps/bun-hello-world-app/issues"
+  },
+  "private": true,
+  "keywords": [
+    "bun",
+    "typescript",
+    "zerops",
+    "postgresql",
+    "hello-world"
+  ],
+  "engines": {
+    "bun": ">=1.2.0"
   }
 }
