@@ -6,7 +6,7 @@ Minimal Bun + TypeScript app with PostgreSQL, idempotent migrations, and a healt
 
 - HTTP port: `3000`
 - Siblings: `db` (PostgreSQL) — env: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`
-- Runtime base: `bun@1.4`
+- Runtime base: `bun@1.3`
 
 ## Zerops dev
 

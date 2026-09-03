@@ -24,7 +24,7 @@ zerops:
   # bun build --target bun inlines all dependencies: no node_modules at runtime.
   - setup: prod
     build:
-      base: bun@1.2
+      base: bun@1.3
       envVariables:
         # Redirect bun's install cache into the project tree so Zerops can cache it
         # between builds. Default ~/.bun is outside the project and cannot be cached.
@@ -51,7 +51,7 @@ zerops:
           path: /
 
     run:
-      base: bun@1.2
+      base: bun@1.3
       # initCommands run on every container start, before the start command.
       # zsc execOnce runs migration exactly once per version across all containers —
       # prevents race conditions when scaling to multiple containers.
@@ -79,7 +79,7 @@ zerops:
   # Bun is pre-installed; run 'bun --hot src/index.ts' to start with hot reload.
   - setup: dev
     build:
-      base: bun@1.2
+      base: bun@1.3
       envVariables:
         BUN_INSTALL: ./.bun
       buildCommands:
@@ -94,7 +94,7 @@ zerops:
         - .bun/install/cache
 
     run:
-      base: bun@1.2
+      base: bun@1.3
       initCommands:
         # Migration runs at deploy time — DB is ready when developer SSHs in
         - zsc execOnce ${appVersionId} -- bun migrate.ts
