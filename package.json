@@ -5,10 +5,10 @@
     "dev": "bun --hot src/index.ts"
   },
   "dependencies": {
-    "pg": "8.23.0"
+    "pg": "8.23.1"
   },
   "devDependencies": {
-    "@types/bun": "1.4.2",
+    "@types/bun": "1.4.3",
     "@types/pg": "8.23.1"
   },
   "description": "Minimal Bun + TypeScript HTTP demo for Zerops with PostgreSQL.",
